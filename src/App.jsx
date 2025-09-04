@@ -1168,11 +1168,7 @@ export default function App() {
     const [selectedSection, setSelectedSection] = useState("1. Introduction");
     const [isSectionLanguageOpen, setIsSectionLanguageOpen] = useState(false);
     const [modalSection, setModalSection] = useState(null);
-    const [submittedQuestion, setSubmittedQuestion] = useState(null);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [currentAnswer, setCurrentAnswer] = useState(null);
-    const [hosQaQuestion, setHosQaQuestion] = useState("");
-    
+        
     // Q&A State
     const [hosQaQuestion, setHosQaQuestion] = useState("");
     const [isAnalyzing, setIsAnalyzing] = useState(false);
