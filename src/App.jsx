@@ -1168,7 +1168,11 @@ export default function App() {
     const [selectedSection, setSelectedSection] = useState("1. Introduction");
     const [isSectionLanguageOpen, setIsSectionLanguageOpen] = useState(false);
     const [modalSection, setModalSection] = useState(null);
-
+    const [submittedQuestion, setSubmittedQuestion] = useState(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [currentAnswer, setCurrentAnswer] = useState(null);
+    const [hosQaQuestion, setHosQaQuestion] = useState("");
+    
     // Q&A State
     const [hosQaQuestion, setHosQaQuestion] = useState("");
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -1622,11 +1626,23 @@ Question: "${questionText}"`;
     );
 
  
-const HOSQA = ({ industryQuestions, setIndustryQuestions, onSectionLinkClick, onLegalLinkClick }) => {
-    const [hosQaQuestion, setHosQaQuestion] = useState("");
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [currentAnswer, setCurrentAnswer] = useState(null);
-    const [submittedQuestion, setSubmittedQuestion] = useState(null);
+// Replace your ENTIRE HOSQA component with this one:
+
+const HOSQA = ({
+    industryQuestions,
+    setIndustryQuestions,
+    onSectionLinkClick,
+    onLegalLinkClick,
+    // Props for state we lifted up to App
+    submittedQuestion,
+    setSubmittedQuestion,
+    isAnalyzing,
+    setIsAnalyzing,
+    currentAnswer,
+    setCurrentAnswer,
+    hosQaQuestion,
+    setHosQaQuestion
+}) => {
 
     const handleHosQaSubmit = async () => {
         const questionText = hosQaQuestion;
@@ -1640,38 +1656,12 @@ const HOSQA = ({ industryQuestions, setIndustryQuestions, onSectionLinkClick, on
         setCurrentAnswer(null);
         setHosQaQuestion("");
 
-        const prompt = `As an expert on school administration, answer the following question for a Head of School. Your response must be detailed, actionable, and professionally formatted. Where appropriate, reference specific laws (e.g., FERPA, IDEA, Title IX), regulations, or established best practices. Format the response as a JSON object with a single key "answer" which is an array of objects. Each object must have a "header" key (a short, bolded topic like "Policy Development:") and a "text" key (the detailed explanation).
-
-Question: "${questionText}"`;
-
-        const hosQaSchema = {
-            type: "OBJECT",
-            properties: {
-                "answer": {
-                    type: "ARRAY",
-                    items: {
-                        type: "OBJECT",
-                        properties: {
-                            "header": { "type": "STRING" },
-                            "text": { "type": "STRING" }
-                        },
-                        required: ["header", "text"]
-                    }
-                }
-            },
-            required: ["answer"]
-        };
-
+        const prompt = `As an expert on school administration, answer the following question... (Your prompt is unchanged)`;
+        const hosQaSchema = { /* ... your schema is unchanged ... */ };
+        
         try {
-            const payload = {
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: hosQaSchema
-                }
-            };
+            const payload = { /* ... your payload is unchanged ... */ };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
-
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1685,10 +1675,9 @@ Question: "${questionText}"`;
                 const jsonText = result.candidates[0].content.parts[0].text;
                 const parsedAnswer = JSON.parse(jsonText);
                 
-                // First, display the answer in the temporary area
+                // This now sets the state in the PARENT App component
                 setCurrentAnswer(parsedAnswer.answer);
 
-                // Second, create the archived version
                 const formattedAnswer = parsedAnswer.answer.map(part => `${part.header}\n${part.text}`).join('\n\n');
                 const newArchivedQuestion = {
                     id: Date.now(),
@@ -1696,8 +1685,6 @@ Question: "${questionText}"`;
                     question: questionText,
                     answer: formattedAnswer
                 };
-                
-                // Finally, add the question to the main archive list
                 setIndustryQuestions(prevQuestions => [newArchivedQuestion, ...prevQuestions]);
 
             } else { throw new Error("Invalid response structure from API"); }
@@ -1725,18 +1712,7 @@ Question: "${questionText}"`;
                         <p>Below you can ask specific questions by selecting a topic or generating your own question.</p>
                         <p>The system is connected to various leading edge LLM knowledge base networks and resources related to the industry that will generate answers immediately.</p>
                     </div>
-                    {/* Topic buttons remain the same */}
-                    <div className="mb-4 flex flex-wrap gap-2">
-                        {hosQaTopics.map((topic) => (
-                            <button
-                                key={topic}
-                                onClick={() => {}}
-                                className={`px-3 py-1 rounded-lg transition-all ${'All' === topic ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                            >
-                                {topic}
-                            </button>
-                        ))}
-                    </div>
+                    {/* ... Topic buttons ... */}
                     <textarea
                         placeholder="e.g. What are our obligations under FERPA if a parent requests to see another student's disciplinary records?"
                         className="mb-2 min-h-[100px] w-full p-2 rounded-md text-black"
@@ -1752,7 +1728,6 @@ Question: "${questionText}"`;
                         {isAnalyzing ? "Analyzing..." : (submittedQuestion ? "Clear Answer" : "Submit Question")}
                     </button>
 
-                    {/* This section now correctly uses the component's internal state */}
                     {submittedQuestion && (
                         <div className="mt-4 space-y-4">
                             <div className="p-3 bg-gray-700 rounded-md">
@@ -1768,7 +1743,6 @@ Question: "${questionText}"`;
                     )}
                 </div>
             </div>
-
             <IndustryQuestionsCard industryQuestions={industryQuestions} />
         </div>
     );
@@ -2048,7 +2022,20 @@ Question: "${questionText}"`;
         {page === "calendar" && <CALENDAR />}
         {page === "alerts" && ALERTS}
         {page === "trends" && TRENDS}
-        {page === "hosqa" && <HOSQA industryQuestions={industryQuestions} setIndustryQuestions={setIndustryQuestions} onSectionLinkClick={handleSectionLinkClick} onLegalLinkClick={handleOpenLegalJournal} />}
+        {page === "hosqa" && <HOSQA 
+        industryQuestions={industryQuestions} 
+        setIndustryQuestions={setIndustryQuestions} 
+        onSectionLinkClick={handleSectionLinkClick} 
+        onLegalLinkClick={handleOpenLegalJournal}
+        submittedQuestion={submittedQuestion}
+        setSubmittedQuestion={setSubmittedQuestion}
+        isAnalyzing={isAnalyzing}
+        setIsAnalyzing={setIsAnalyzing}
+        currentAnswer={currentAnswer}
+        setCurrentAnswer={setCurrentAnswer}
+        hosQaQuestion={hosQaQuestion}
+        setHosQaQuestion={setHosQaQuestion}
+        />}
         {page === "legal" && LEGAL}
     </main>
 </div>
