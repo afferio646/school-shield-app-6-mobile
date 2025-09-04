@@ -1942,7 +1942,7 @@ Question: "${questionText}"`;
     </div>
 </header>
 
-           <div className="flex flex-1 min-h-0">
+           <div className="flex flex-1 min-h-0" style={{ background: "#7c2d2d" }}>
     {/* Overlay for mobile menu */}
     {isMobileMenuOpen && (
         <div
@@ -1978,7 +1978,7 @@ Question: "${questionText}"`;
         ))}
     </aside>
 
-    <main className="flex-1 p-4 md:p-10 overflow-y-auto w-full">
+    <main className="flex-1 p-4 md:p-10 overflow-y-auto w-full" style={{ background: "#f3f4f6" }}>
         {page === "dashboard" && DASHBOARD}
         {page === "risk" && <RiskAssessmentCenter handbookText={fullHandbookText} apiKey={GEMINI_API_KEY} handbookSectionLanguage={handbookSectionLanguage} onSectionLinkClick={handleSectionLinkClick} onLegalLinkClick={handleOpenLegalJournal} />}
         {page === "handbook" && HANDBOOK}
