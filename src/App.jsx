@@ -1672,14 +1672,14 @@ const HOSQA = ({
                         <p>Ask specific questions and receive immediate guidance. The system is connected to various leading-edge knowledge bases and resources to generate comprehensive answers.</p>
                     </div>
                     <textarea
-                        placeholder="e.g., What are our obligations under FERPA if a parent requests to see another student's disciplinary records?"
-                        className="mb-3 min-h-[120px] w-full p-3 rounded-lg text-black text-base focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
-                        style={{ background: "#fff", border: "2px solid #ccc" }}
-                        value={hosQaQuestion}
-                        onChange={e => setHosQaQuestion(e.target.value)}
-                        disabled={isAnalyzing}
-                    />
-                    <button
+                          placeholder="e.g., What are our obligations under FERPA if a parent requests to see another student's disciplinary records?"
+                          className="mb-3 min-h-[120px] w-full p-3 rounded-lg text-black text-base focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+                          style={{ background: "#fff", border: "2px solid #ccc" }}
+                          value={hosQaQuestion}
+                          onChange={e => setHosQaQuestion(e.target.value)}
+                          disabled={isAnalyzing}
+                          />
+                        <button
                         className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md transition-all disabled:bg-gray-500 disabled:cursor-not-allowed"
                         onClick={submittedQuestion ? handleHosQaClose : handleHosQaSubmit}
                         disabled={isAnalyzing || (!submittedQuestion && !hosQaQuestion.trim())}>
