@@ -1036,82 +1036,69 @@ function RiskAssessmentCenter({ handbookText, apiKey, handbookSectionLanguage, o
     );
 }
 
+function IndustryQuestionsCard({ industryQuestions, onSectionLinkClick, onLegalLinkClick }) {
+    const [selectedTopic, setSelectedTopic] = useState('All');
+    const [analyzingQuestionId, setAnalyzingQuestionId] = useState(null);
+    const [revealedAnswers, setRevealedAnswers] = useState({});
 
-function IndustryQuestionsCard({ industryQuestions }) {
-    const [selectedTopic, setSelectedTopic] = useState('All');
-    const [analyzingQuestionId, setAnalyzingQuestionId] = useState(null);
-    const [revealedAnswers, setRevealedAnswers] = useState({});
+    const topics = [
+        "All", "Archived Questions", "Human Resources",
+        "Student, Parent & Faculty Handbook Policy Questions", "Governance and Board Topics"
+    ];
 
-    const topics = [
-        "All",
-        "Archived Questions",
-        "Human Resources",
-        "Student, Parent & Faculty Handbook Policy Questions",
-        "Governance and Board Topics"
-    ];
+    const filteredQuestions = selectedTopic === 'All'
+        ? industryQuestions
+        : industryQuestions.filter(q => q.category === selectedTopic);
 
-    const filteredQuestions = selectedTopic === 'All'
-        ? industryQuestions
-        : industryQuestions.filter(q => q.category === selectedTopic);
+    const handleAnalyze = (id) => {
+        if (revealedAnswers[id]) {
+            setRevealedAnswers(prev => ({ ...prev, [id]: false }));
+        } else {
+            setAnalyzingQuestionId(id);
+            setTimeout(() => {
+                setRevealedAnswers(prev => ({ ...prev, [id]: true }));
+                setAnalyzingQuestionId(null);
+            }, 750);
+        }
+    };
 
-    const handleAnalyze = (id) => {
-        if (revealedAnswers[id]) {
-            setRevealedAnswers(prev => ({ ...prev, [id]: false }));
-        } else {
-            setAnalyzingQuestionId(id);
-            setTimeout(() => {
-                setRevealedAnswers(prev => ({ ...prev, [id]: true }));
-                setAnalyzingQuestionId(null);
-            }, 1500);
-        }
-    };
-
-    return (
-        <div className="shadow-2xl border-0 rounded-2xl" style={{ background: "#4B5C64", color: "#fff" }}>
-            <div className="p-6">
-                <SectionHeader icon={<TrendingUp className="text-[#faecc4]" size={26} />} title="Current Archived and Industry Questions" />
-                <div className="mb-6 text-white font-bold space-y-2">
-                    <p>Below are current questions related to industry trends and legislation that are identified on an ongoing basis as the Micro Utility monitors a large number of resources relevant to the industry.</p>
-                    <p>Click the Analyze for Solution button and the system will gather information from specific LLM modules and data resources to provide answers.</p>
-                </div>
-                <div className="flex flex-wrap items-start gap-2 mb-6">
-                    {topics.map(topic => (
-                        <button
-                            key={topic}
-                            onClick={() => setSelectedTopic(topic)}
-                            className={`px-3 py-1 rounded-lg transition-all ${selectedTopic === topic ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                        >
-                            {topic}
-                        </button>
-                    ))}
-                </div>
-                <div className="space-y-2 max-h-96 overflow-y-scroll pr-2">
-                    {filteredQuestions.map((q, i) => (
-                        <React.Fragment key={q.id}>
-                            <div className="p-2 bg-gray-700 rounded-lg">
-                                <p className="font-semibold">{q.question}</p>
-                                <div className="mt-2">
-                                    <button
-                                        onClick={() => handleAnalyze(q.id)}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1 rounded-lg text-xs"
-                                        disabled={analyzingQuestionId === q.id}
-                                    >
-                                        {analyzingQuestionId === q.id ? 'Analyzing...' : (revealedAnswers[q.id] ? 'Close' : 'Analyze for Solution')}
-                                    </button>
-                                </div>
-                                {revealedAnswers[q.id] && (
-                                    <div className="mt-3 p-3 bg-gray-800 rounded-md border-l-4 border-blue-400">
-                                        <p className="text-sm">{q.answer}</p>
-                                    </div>
-                                )}
-                            </div>
-                            {i < filteredQuestions.length - 1 && <hr className="border-gray-600 my-1" />}
-                        </React.Fragment>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
+    return (
+        <div className="shadow-2xl border-0 rounded-2xl" style={{ background: "#4B5C64", color: "#fff" }}>
+            <div className="p-6">
+                <SectionHeader icon={<Archive className="text-[#faecc4]" size={26} />} title="Archived & Industry Questions" />
+                <div className="mb-6 text-white font-medium space-y-2">
+                    <p>Review previously answered questions or explore common industry topics. New questions you submit above are automatically archived here.</p>
+                </div>
+                <div className="flex flex-wrap items-start gap-2 mb-6">
+                    {topics.map(topic => (
+                        <button key={topic} onClick={() => setSelectedTopic(topic)}
+                            className={`px-3 py-1 rounded-full text-sm font-semibold transition-all ${selectedTopic === topic ? 'bg-blue-600 text-white' : 'bg-gray-600 text-gray-200 hover:bg-gray-500'}`}>
+                            {topic}
+                        </button>
+                    ))}
+                </div>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                    {filteredQuestions.length > 0 ? filteredQuestions.map((q) => (
+                        <div key={q.id} className="p-4 bg-gray-700 rounded-lg">
+                            <p className="font-semibold">{q.question}</p>
+                            <div className="mt-3">
+                                <button onClick={() => handleAnalyze(q.id)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1 rounded-lg text-xs shadow-md disabled:bg-gray-500"
+                                    disabled={analyzingQuestionId === q.id}>
+                                    {analyzingQuestionId === q.id ? 'Analyzing...' : (revealedAnswers[q.id] ? 'Close Answer' : 'Show Answer')}
+                                </button>
+                            </div>
+                            {revealedAnswers[q.id] && (
+                                <div className="mt-4 p-4 bg-gray-800 rounded-md border-t-2 border-blue-400">
+                                    <AIContentRenderer content={q.answer} onSectionLinkClick={onSectionLinkClick} onLegalLinkClick={onLegalLinkClick} />
+                                </div>
+                            )}
+                        </div>
+                    )) : <p className="p-4 text-center text-gray-400">No questions in this category.</p>}
+                </div>
+            </div>
+        </div>
+    );
 }
    
 // --- New Helper for Highlighting Text ---
@@ -1623,141 +1610,95 @@ Question: "${questionText}"`;
 
  
 const HOSQA = ({
-    industryQuestions,
-    setIndustryQuestions,
-    onSectionLinkClick,
-    onLegalLinkClick,
-    // Props for state we lifted up to App
-    submittedQuestion,
-    setSubmittedQuestion,
-    isAnalyzing,
-    setIsAnalyzing,
-    currentAnswer,
-    setCurrentAnswer,
-    hosQaQuestion,
-    setHosQaQuestion
+    industryQuestions, setIndustryQuestions, onSectionLinkClick, onLegalLinkClick,
+    submittedQuestion, setSubmittedQuestion, isAnalyzing, setIsAnalyzing,
+    currentAnswer, setCurrentAnswer, hosQaQuestion, setHosQaQuestion
 }) => {
 
-   // In your HOSQA component, replace the whole handleHosQaSubmit function with this one:
+    const handleHosQaSubmit = async () => {
+        const questionText = hosQaQuestion;
+        if (!questionText.trim()) return;
 
-const handleHosQaSubmit = async () => {
-    const questionText = hosQaQuestion;
-    if (!questionText || !GEMINI_API_KEY) {
-        alert("Please provide a question and ensure your API key is set.");
-        return;
-    }
+        setSubmittedQuestion(questionText);
+        setIsAnalyzing(true);
+        setCurrentAnswer(null);
+        setHosQaQuestion("");
 
-    setSubmittedQuestion(questionText);
-    setIsAnalyzing(true);
-    setCurrentAnswer(null);
-    setHosQaQuestion("");
+        const prompt = `You are an expert consultant for K-12 school leaders. Your tone is professional, clear, and authoritative. Analyze the following question and provide a detailed, actionable response. CRITICAL FORMATTING RULES: 1. Structure your response into logical sections. 2. Each section MUST start with a header enclosed in double asterisks, followed by a colon, and then a newline. For example: **Legal Considerations:**\n 3. Provide a comprehensive answer, using single asterisks (*word*) for emphasis if needed. Question: "${questionText}"`;
 
-    // A simpler, more direct prompt for a text-based response
-    const prompt = `As an expert on school administration, answer the following question for a Head of School. Your response must be detailed, actionable, and professionally formatted. Use markdown for formatting, with bolded headers followed by a newline and then the explanation. For example: '**Policy Development:**\nStart by reviewing your current employee handbook...'
-
-Question: "${questionText}"`;
-
-    try {
-        // We remove the complex 'generationConfig' and 'responseSchema'
-        const payload = {
-            contents: [{ parts: [{ text: prompt }] }],
-        };
-
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
-        
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            // This will now give us a more descriptive error message if something goes wrong
-            const errorBody = await response.json();
-            throw new Error(`API request failed with status ${response.status}: ${errorBody.error.message}`);
-        }
-
-        const result = await response.json();
-        
-        // We now parse the simple text response from the AI
-        const rawText = result.candidates[0].content.parts[0].text;
-
-        // Convert the markdown-style text into the array format our UI expects
-        const answerArray = rawText.split('**').filter(part => part.trim() !== "").map(part => {
-            const [header, ...text] = part.split(':**\n');
-            return {
-                header: header.trim() + ":",
-                text: text.join(':**\n').trim()
+        try {
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.3 }
             };
-        });
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
 
-        setCurrentAnswer(answerArray);
+            if (!response.ok) {
+                const errorBody = await response.json();
+                throw new Error(`API request failed: ${response.status} - ${errorBody?.error?.message || 'Unknown API error'}`);
+            }
+            const result = await response.json();
+            if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                throw new Error("Invalid response structure from API.");
+            }
+            const rawText = result.candidates[0].content.parts[0].text;
+            const answerArray = rawText.split(/\*\*(.*?):\*\*\s*\n/).filter(p => p.trim()).reduce((acc, part, i, arr) => {
+                if (i % 2 === 0) acc.push({ header: `${part.trim()}:`, text: (arr[i + 1] || "").trim() });
+                return acc;
+            }, []);
 
-        // This part for archiving remains the same
-        const newArchivedQuestion = {
-            id: Date.now(),
-            category: 'Archived Questions',
-            question: questionText,
-            answer: rawText // We can store the raw text in the archive
-        };
-        setIndustryQuestions(prevQuestions => [newArchivedQuestion, ...prevQuestions]);
-
-    } catch (error) {
-        console.error("Error generating AI response:", error);
-        setCurrentAnswer([{ header: "Error", text: `Sorry, I encountered an error. ${error.message}` }]);
-    } finally {
-        setIsAnalyzing(false);
-    }
-};
+            setCurrentAnswer(answerArray.length ? answerArray : rawText);
+            setIndustryQuestions(prev => [{ id: Date.now(), category: 'Archived Questions', question: questionText, answer: rawText }, ...prev]);
+        } catch (error) {
+            console.error("Error generating AI response:", error);
+            setCurrentAnswer(`An error occurred: ${error.message}. Please check your API key and the console.`);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
 
     const handleHosQaClose = () => {
         setCurrentAnswer(null);
         setSubmittedQuestion(null);
     };
 
-    const hosQaTopics = ["All", "Discipline", "HR", "Student Safety"];
-
     return (
-        <div className="max-w-2xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-8">
             <div className="shadow-2xl border-0 rounded-2xl" style={{ background: "#4B5C64", color: "#fff" }}>
                 <div className="p-6">
                     <SectionHeader icon={<MessageCircle className="text-[#faecc4]" size={26} />} title="IQ School Leaders Q&A" />
-                    <div className="mb-6 text-white font-bold space-y-2">
-                        <p>Below you can ask specific questions by selecting a topic or generating your own question.</p>
-                        <p>The system is connected to various leading edge LLM knowledge base networks and resources related to the industry that will generate answers immediately.</p>
+                    <div className="mb-6 text-white font-medium space-y-2">
+                        <p>Ask specific questions and receive immediate guidance. The system is connected to various leading-edge knowledge bases and resources to generate comprehensive answers.</p>
                     </div>
-                    {/* ... Topic buttons ... */}
                     <textarea
-                        placeholder="e.g. What are our obligations under FERPA if a parent requests to see another student's disciplinary records?"
-                        className="mb-2 min-h-[100px] w-full p-2 rounded-md text-black"
-                        style={{ background: "#fff", border: "2px solid #faecc4" }}
+                        placeholder="e.g., What are our obligations under FERPA if a parent requests to see another student's disciplinary records?"
+                        className="mb-3 min-h-[120px] w-full p-3 rounded-lg text-black text-base focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+                        style={{ background: "#fff", border: "2px solid #ccc" }}
                         value={hosQaQuestion}
                         onChange={e => setHosQaQuestion(e.target.value)}
+                        disabled={isAnalyzing}
                     />
                     <button
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 rounded-lg mb-4 py-1"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md transition-all disabled:bg-gray-500 disabled:cursor-not-allowed"
                         onClick={submittedQuestion ? handleHosQaClose : handleHosQaSubmit}
-                        disabled={isAnalyzing}
-                    >
+                        disabled={isAnalyzing || (!submittedQuestion && !hosQaQuestion.trim())}>
                         {isAnalyzing ? "Analyzing..." : (submittedQuestion ? "Clear Answer" : "Submit Question")}
                     </button>
-
                     {submittedQuestion && (
-                        <div className="mt-4 space-y-4">
-                            <div className="p-3 bg-gray-700 rounded-md">
-                                <p className="font-semibold">{submittedQuestion}</p>
-                                {isAnalyzing && <p className="text-sm text-yellow-400 mt-2">Analyzing...</p>}
-                                {currentAnswer && (
-                                    <div className="mt-3 p-3 bg-gray-800 rounded-md border-l-4 border-blue-400">
-                                        <AIContentRenderer content={currentAnswer} onSectionLinkClick={onSectionLinkClick} onLegalLinkClick={onLegalLinkClick} />
-                                    </div>
-                                )}
-                            </div>
+                        <div className="mt-6 p-4 bg-gray-700 rounded-lg shadow-inner">
+                            <p className="font-semibold text-lg text-[#faecc4]">{submittedQuestion}</p>
+                            {isAnalyzing && <p className="text-sm text-yellow-300 mt-2 animate-pulse">Analyzing...</p>}
+                            {currentAnswer && (
+                                <div className="mt-4 p-4 bg-gray-800 rounded-md border-t-2 border-blue-400">
+                                    <AIContentRenderer content={currentAnswer} onSectionLinkClick={onSectionLinkClick} onLegalLinkClick={onLegalLinkClick} />
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
             </div>
-            <IndustryQuestionsCard industryQuestions={industryQuestions} />
+            <IndustryQuestionsCard industryQuestions={industryQuestions} onSectionLinkClick={onSectionLinkClick} onLegalLinkClick={onLegalLinkClick} />
         </div>
     );
 };
