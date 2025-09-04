@@ -1622,8 +1622,6 @@ Question: "${questionText}"`;
     );
 
  
-// Replace your ENTIRE HOSQA component with this one:
-
 const HOSQA = ({
     industryQuestions,
     setIndustryQuestions,
@@ -1640,57 +1638,77 @@ const HOSQA = ({
     setHosQaQuestion
 }) => {
 
-    const handleHosQaSubmit = async () => {
-        const questionText = hosQaQuestion;
-        if (!questionText || !GEMINI_API_KEY) {
-            alert("Please provide a question and ensure your API key is set.");
-            return;
-        }
+   // In your HOSQA component, replace the whole handleHosQaSubmit function with this one:
 
-        setSubmittedQuestion(questionText);
-        setIsAnalyzing(true);
-        setCurrentAnswer(null);
-        setHosQaQuestion("");
+const handleHosQaSubmit = async () => {
+    const questionText = hosQaQuestion;
+    if (!questionText || !GEMINI_API_KEY) {
+        alert("Please provide a question and ensure your API key is set.");
+        return;
+    }
 
-        const prompt = `As an expert on school administration, answer the following question... (Your prompt is unchanged)`;
-        const hosQaSchema = { /* ... your schema is unchanged ... */ };
+    setSubmittedQuestion(questionText);
+    setIsAnalyzing(true);
+    setCurrentAnswer(null);
+    setHosQaQuestion("");
+
+    // A simpler, more direct prompt for a text-based response
+    const prompt = `As an expert on school administration, answer the following question for a Head of School. Your response must be detailed, actionable, and professionally formatted. Use markdown for formatting, with bolded headers followed by a newline and then the explanation. For example: '**Policy Development:**\nStart by reviewing your current employee handbook...'
+
+Question: "${questionText}"`;
+
+    try {
+        // We remove the complex 'generationConfig' and 'responseSchema'
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+        };
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
         
-        try {
-            const payload = { /* ... your payload is unchanged ... */ };
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-            if (!response.ok) { throw new Error(`API request failed with status ${response.status}`); }
-
-            const result = await response.json();
-            if (result.candidates && result.candidates[0].content.parts.length > 0) {
-                const jsonText = result.candidates[0].content.parts[0].text;
-                const parsedAnswer = JSON.parse(jsonText);
-                
-                // This now sets the state in the PARENT App component
-                setCurrentAnswer(parsedAnswer.answer);
-
-                const formattedAnswer = parsedAnswer.answer.map(part => `${part.header}\n${part.text}`).join('\n\n');
-                const newArchivedQuestion = {
-                    id: Date.now(),
-                    category: 'Archived Questions',
-                    question: questionText,
-                    answer: formattedAnswer
-                };
-                setIndustryQuestions(prevQuestions => [newArchivedQuestion, ...prevQuestions]);
-
-            } else { throw new Error("Invalid response structure from API"); }
-        } catch (error) {
-            console.error("Error generating AI response:", error);
-            setCurrentAnswer([{ header: "Error", text: `Sorry, I encountered an error. ${error.message}` }]);
-        } finally {
-            setIsAnalyzing(false);
+        if (!response.ok) {
+            // This will now give us a more descriptive error message if something goes wrong
+            const errorBody = await response.json();
+            throw new Error(`API request failed with status ${response.status}: ${errorBody.error.message}`);
         }
-    };
+
+        const result = await response.json();
+        
+        // We now parse the simple text response from the AI
+        const rawText = result.candidates[0].content.parts[0].text;
+
+        // Convert the markdown-style text into the array format our UI expects
+        const answerArray = rawText.split('**').filter(part => part.trim() !== "").map(part => {
+            const [header, ...text] = part.split(':**\n');
+            return {
+                header: header.trim() + ":",
+                text: text.join(':**\n').trim()
+            };
+        });
+
+        setCurrentAnswer(answerArray);
+
+        // This part for archiving remains the same
+        const newArchivedQuestion = {
+            id: Date.now(),
+            category: 'Archived Questions',
+            question: questionText,
+            answer: rawText // We can store the raw text in the archive
+        };
+        setIndustryQuestions(prevQuestions => [newArchivedQuestion, ...prevQuestions]);
+
+    } catch (error) {
+        console.error("Error generating AI response:", error);
+        setCurrentAnswer([{ header: "Error", text: `Sorry, I encountered an error. ${error.message}` }]);
+    } finally {
+        setIsAnalyzing(false);
+    }
+};
 
     const handleHosQaClose = () => {
         setCurrentAnswer(null);
